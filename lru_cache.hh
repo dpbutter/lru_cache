@@ -1,7 +1,7 @@
 //	STL-like templated LRU cache.
 //
 // Copyright (C) 2024 Daniel Butter <dbutter@gmail.com>
-// Distributed under the GNU General Public License version 3.
+// Distributed under the MIT license.
 //
 
 /** \mainpage lru_cache.hh
