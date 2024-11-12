@@ -33,14 +33,15 @@ public:
 
     LRUcache(size_t capacity) : max_size(capacity) {}
 
-    // Access an item by key
-    Value& at(const Key& key) {
+    // Access an item by key (possibly touching it)
+    Value& at(const Key& key, bool touching = true) {
         auto lookup_it = cache_lookup.find(key);
         if (lookup_it == cache_lookup.end()) {
             throw std::out_of_range("Key not found");
         }
-        // Move accessed node to the front
-        cache_list.splice(cache_list.begin(), cache_list, lookup_it->second);
+        if (touching) {
+            touch(lookup_it->second);
+        }
         return lookup_it->second->second;
     }
 
@@ -48,8 +49,8 @@ public:
     void insert(const Key& key, const Value& value) {
         auto lookup_it = cache_lookup.find(key);
         if (lookup_it != cache_lookup.end()) {
+            touch(lookup_it->second);
             lookup_it->second->second = value;
-            cache_list.splice(cache_list.begin(), cache_list, lookup_it->second);
         } else {
             while (cache_list.size() >= max_size) {
                 evict();
@@ -64,7 +65,7 @@ public:
         auto lookup_it = cache_lookup.find(key);
         if (lookup_it != cache_lookup.end()) {
             // If found, move it to the front of the list (LRU behavior)
-            cache_list.splice(cache_list.begin(), cache_list, lookup_it->second);
+            touch(lookup_it->second);
             return lookup_it->second->second;
         } else {
             while (cache_list.size() >= max_size) {
@@ -78,22 +79,28 @@ public:
         }
     }
 
-    // Check if a key exists (and moves the key to the front)
-    bool contains(const Key& key) {
-        // return cache_lookup.find(key) != cache_lookup.end();
-        return find(key) != end();
+    // Touches a list iterator, moving it to the top
+    void touch(iterator& it) { 
+        if (it != cache_list.begin()) {
+            cache_list.splice(cache_list.begin(), cache_list, it);
+        }
     }
 
-    // Find a key 
-    iterator find(const Key& key) {
+    // Find a key (possibly touching it)
+    iterator find(const Key& key, bool touching = true) {
         auto lookup_it = cache_lookup.find(key);
         if (lookup_it == cache_lookup.end()) {
             return cache_list.end();  // Key not found
         }
-        // Move accessed element to the front (most recently used)
-        /** Make this conditional in case rule already at front? **/
-        cache_list.splice(cache_list.begin(), cache_list, lookup_it->second);
-        return cache_list.begin();
+        if (touching) {
+            touch(lookup_it->second);
+        }
+        return lookup_it->second;
+    }
+
+    // Check if a key exists (possibly touching it)
+    bool contains(const Key& key, bool touching = true) {
+        return find(key, touching) != end();
     }
 
     // Remove an item by key
@@ -138,17 +145,12 @@ public:
     // Iterators
     iterator begin() { return cache_list.begin(); }
     iterator end() { return cache_list.end(); }
-    const_iterator begin() const { return cache_list.begin(); }
-    const_iterator end() const { return cache_list.end(); }
-    const_iterator cbegin() const { return cache_list.cbegin(); }
-    const_iterator cend() const { return cache_list.cend(); }
-
 
 
 private:
 
-    List cache_list;  								 	// Doubly linked list of key-value pairs
-    std::map<Key, iterator, Compare> cache_lookup;  	// Map to locate list nodes
+    List cache_list;  							        // Doubly linked list of key-value pairs
+    std::map<Key, iterator, Compare> cache_lookup;      // Map to locate list nodes
     size_t max_size;
 
     void evict() {
