@@ -131,15 +131,23 @@ public:
         cache_lookup.clear();
     }
 
+    // Check if the cache is empty
+    bool empty() const {
+        return cache_list.empty();
+    }
+
     // Get the current size of the cache
     size_t size() const {
         assert(cache_list.size() == cache_lookup.size());
         return cache_list.size();
     }
 
-    // Check if the cache is empty
-    bool empty() const {
-        return cache_list.empty();
+    // Resize the cache
+    void resize(size_t new_size) {
+        max_size = new_size;
+        while (cache_list.size() >= max_size) {
+            evict();
+        }
     }
 
     // Iterators
