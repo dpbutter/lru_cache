@@ -33,6 +33,13 @@ public:
 
     LRUcache(size_t capacity) : max_size(capacity) {}
 
+    // Touches a list iterator, moving it to the top
+    void touch(iterator& it) { 
+        if (it != cache_list.begin()) {
+            cache_list.splice(cache_list.begin(), cache_list, it);
+        }
+    }
+
     // Access an item by key (possibly touching it)
     Value& at(const Key& key, bool touching = true) {
         auto lookup_it = cache_lookup.find(key);
@@ -45,7 +52,7 @@ public:
         return lookup_it->second->second;
     }
 
-    // Insert or update an item
+    // Insert or update an item (always touches)
     void insert(const Key& key, const Value& value) {
         auto lookup_it = cache_lookup.find(key);
         if (lookup_it != cache_lookup.end()) {
@@ -60,7 +67,7 @@ public:
         }
     }
 
-    // Implementing operator[] to access or insert into properties
+    // Access an item (or create it) using operator[] (always touches)
     Value& operator[](const Key& key) {
         auto lookup_it = cache_lookup.find(key);
         if (lookup_it != cache_lookup.end()) {
@@ -76,13 +83,6 @@ public:
             iterator new_iter = cache_list.begin();
             cache_lookup[key] = new_iter;
             return new_iter->second;
-        }
-    }
-
-    // Touches a list iterator, moving it to the top
-    void touch(iterator& it) { 
-        if (it != cache_list.begin()) {
-            cache_list.splice(cache_list.begin(), cache_list, it);
         }
     }
 
