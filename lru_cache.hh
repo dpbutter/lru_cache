@@ -7,7 +7,7 @@
 /** \mainpage lru_cache.hh
     \author   Daniel Butter
     \version  1.00
-    \date     2024-11-12
+    \date     2024-11-13
     \see      http://github.com/dpbutter/lru_cache.hh/
 
 */
@@ -21,7 +21,7 @@
 #include <stdexcept>
 #include <iterator>
 
-template <typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare = std::less<Key>>
 class LRUcache {
 public:
     using value_type = std::pair<Key, Value>;
